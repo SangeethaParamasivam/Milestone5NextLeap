@@ -1,0 +1,110 @@
+{
+  "name": "CHATGPT-CLIENT",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "5676c5e8-4115-4641-890e-4f7ac378952e"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f96b1a0e-2b9f-46df-95ed-7072f10d01fb",
+      "name": "MCP Server Trigger",
+      "webhookId": "5676c5e8-4115-4641-890e-4f7ac378952e"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "sendTo": "prsangee1999@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        176
+      ],
+      "id": "ce307b63-0a30-4cb6-94c7-39983d7d53a0",
+      "name": "Create a draft in Gmail",
+      "webhookId": "1176356c-054d-4001-b60a-f1dbe569a171",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LOgihhtP0n3JFLDZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Doc_ID_or_URL', ``, 'string') }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('actionFields0_Old_Text', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        64,
+        160
+      ],
+      "id": "29226b30-d34b-412e-9d27-ce321f05e9f7",
+      "name": "Update a document in Google Docs1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "zmgz1N7LEH0WNmxT",
+          "name": "Google Docs account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create a draft in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document in Google Docs1": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2f32986d-7ccf-42ee-a123-1ecc8667dbbc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "323434a791602b15ccd8985c9d69cffb073e6f56b8329bc99832d653005523e2"
+  },
+  "nodeGroups": [],
+  "id": "HAcyffcQBye7bOk6",
+  "tags": []
+}
