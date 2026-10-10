@@ -1,0 +1,583 @@
+{
+  "name": "Milestone-5",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b0893b59-756f-4c6d-9183-36e464261caf",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_DOC_ID",
+          "mode": "list",
+          "cachedResultName": "ai-workflow-test-data.csv",
+          "cachedResultUrl": "https://drive.google.com/file/d/YOUR_GOOGLE_DOC_ID/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6a043beb-3cab-482e-9910-c405a0396e24",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "aJ5nsWBq2N5ED1QN",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "ae369066-8bd4-48d6-9648-5bb1f3be11b2",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  if (item.json.Review) {\n    item.json.Review = item.json.Review.replace(/�/g, '');\n  }\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "7dc8ca55-27be-4dcb-8e1c-84e41e458e6a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        864,
+        0
+      ],
+      "id": "9e5bd066-b7d5-4d81-ba5e-9805ff6707f8",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        176
+      ],
+      "id": "a073c02e-7225-4d62-804d-27f4f23fc98f",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "mRfj7ghV2oSGGmw6",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following customer reviews.\n\nIdentify:\n1. Top recurring themes\n2. Positive themes\n3. Negative themes\n4. Overall sentiment\n5. Pricing/subscription confusion\n6. Recommended product improvements\n\nOnly use facts and numbers that appear in the input. If a number is not in the input, do not write one. Say \"users report limits are too low\" instead of giving a figure.\n\nReviews:\n\n{{ JSON.stringify($json.data) }}",
+        "options": {
+          "systemMessage": "You are a Senior Product Manager.\n\nAnalyze customer reviews and provide actionable insights.\n\nReturn ONLY valid JSON in the following format:\n\n{\n  \"top_themes\": [],\n  \"positive_themes\": [],\n  \"negative_themes\": [],\n  \"pricing_confusion\": \"\",\n  \"sentiment_summary\": \"\",\n  \"recommended_actions\": []\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "cb137ae4-17d7-4074-834e-3f84be76c697",
+      "name": "Review Intelligence Layer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Senior Product Manager.\n\nCreate a Weekly Product Pulse report.\n\nStructure:\n\n Executive Summary\n\n Top User Issues\n\n Positive Signals\n\n Emerging Trends\n\n Product Recommendations\n\n Next Week Actions\n\nOutput plain text only. Do not use markdown symbols such as #, *, ** or ---. Use simple capitalised headings and \"-\" for bullets. “Do not invent numbers or dates”\n\nAnalysis:\n\n{{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1424,
+        0
+      ],
+      "id": "47000c80-89ce-44e7-a1ba-c137f2aaee38",
+      "name": "Generate Weekly Product Pulse"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        192
+      ],
+      "id": "4b36f69c-af3c-4a0e-af28-ae1a6d7b881d",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "mRfj7ghV2oSGGmw6",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Create a customer-facing explanation.\n\nTopic: Subscription and Usage Limit Confusion\n\nExplain in 4 to 5 short bullet points:\n- image upload limits\n- attachment limits\n- free vs paid plans\n- cooldown periods\n- why restrictions occur\n\nRules:\n- Do not mention any specific limits, quotas, prices or numbers.\n- Do not promise unlimited access, priority processing, or any benefit not listed above.\n- Say limits can vary by plan and may change.\n- Output plain text only. No markdown symbols such as * or #. Start each bullet with \"-\".\n- Friendly tone. Max 200 words.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1728,
+        0
+      ],
+      "id": "80c225de-db3e-4a5f-9b59-0431dfacb4a4",
+      "name": "Generate Customer Explanation"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        176
+      ],
+      "id": "44d7b049-13db-4223-a69c-8fa87e823b87",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "mRfj7ghV2oSGGmw6",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "efd997d6-a34c-43ca-818a-41f667ce82c9",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "Approved",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2272,
+        0
+      ],
+      "id": "9d362670-3c2a-429f-9ea7-922a3877b3e2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "852d5827-34ea-4a3f-93a3-a615cbfec7bf",
+              "name": "docId",
+              "value": "YOUR_GOOGLE_DOC_ID",
+              "type": "string"
+            },
+            {
+              "id": "65961a33-5d0e-43a4-895c-f2fe5f05e332",
+              "name": "docUrl",
+              "value": "=https://docs.google.com/document/d/YOUR_GOOGLE_DOC_ID/edit",
+              "type": "string"
+            },
+            {
+              "id": "6a5cfb9e-5898-4079-941f-69f3c3e12d4d",
+              "name": "date",
+              "value": "={{ $now.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "58ac9f3e-49eb-4389-8c1f-2649df3c1d3e",
+              "name": "entryText",
+              "value": "={{ '\\n\\n' }}----------------------------------------\n=== {{ $now.toFormat('yyyy-MM-dd') }} ===\nTop themes: {{ JSON.parse($('Review Intelligence Layer').first().json.output.replace(/[`]{3}(json)?/g, '')).top_themes.join(', ') }}\n\nWeekly pulse:\n{{ $('Generate Weekly Product Pulse').first().json.output }}\n\nFee issue: {{ JSON.parse($('Review Intelligence Layer').first().json.output.replace(/[`]{3}(json)?/g, '')).pricing_confusion }}\n\nExplanation:\n{{ $('Generate Customer Explanation').first().json.output }}\n\nLast checked: {{ $now.toFormat('yyyy-MM-dd') }}\n\nSources:\nhttps://help.openai.com/en/articles/9039756\nhttps://help.openai.com/en/articles/7242622\nhttps://help.openai.com/en/collections/6864546-billing-questions\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt&reviewId=10f3af91-8643-40ce-99e3-2ad46510e8ff\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt&reviewId=daba1dc3-d9e6-4f64-b7d2-bd7818a4ca9d",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2496,
+        -16
+      ],
+      "id": "f79dc8b7-d469-4999-9995-1c5be9cf7443",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "YOUR_MCP_SERVER_PRODUCTION_URL",
+        "tool": {
+          "__rl": true,
+          "value": "Create_a_draft_in_Gmail",
+          "mode": "list",
+          "cachedResultName": "Create_a_draft_in_Gmail"
+        },
+        "parameters": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Message": "=Hi team,\n\nWEEKLY PRODUCT PULSE\n{{ $('Generate Weekly Product Pulse').first().json.output }}\n\nFEE EXPLANATION (reusable support snippet)\n{{ $('Generate Customer Explanation').first().json.output }}\n\nLast checked: {{ $now.toFormat('yyyy-MM-dd') }}\n\nFull log (themes, sources, history):\n{{ $('Edit Fields1').first().json.docUrl }}\n\nSources:\nhttps://help.openai.com/en/articles/9039756\nhttps://help.openai.com/en/articles/7242622\nhttps://help.openai.com/en/collections/6864546-billing-questions\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt&reviewId=10f3af91-8643-40ce-99e3-2ad46510e8ff\nhttps://play.google.com/store/apps/details?id=com.openai.chatgpt&reviewId=daba1dc3-d9e6-4f64-b7d2-bd7818a4ca9d",
+            "Subject": "=Weekly Product Pulse + Customer Clarification — {{ $now.toFormat('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "Message"
+          ],
+          "schema": [
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1.1,
+      "position": [
+        2880,
+        -16
+      ],
+      "id": "0ec72d90-f7e5-44f7-9c4a-36e23841e1c3",
+      "name": "MCP Client - GMail"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "YOUR_MCP_SERVER_PRODUCTION_URL",
+        "tool": {
+          "__rl": true,
+          "value": "Update_a_document_in_Google_Docs1",
+          "mode": "list",
+          "cachedResultName": "Update_a_document_in_Google_Docs1"
+        },
+        "parameters": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Doc_ID_or_URL": "={{ $json.docId }}",
+            "actionFields0_Old_Text": "={{ $json.entryText }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Doc_ID_or_URL",
+              "displayName": "Doc_ID_or_URL",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actionFields0_Old_Text",
+              "displayName": "actionFields0_Old_Text",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1.1,
+      "position": [
+        2672,
+        -16
+      ],
+      "id": "6001642e-1874-497f-9d36-4e1dabbf655a",
+      "name": "MCP Client - Google Doc"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "your-email@example.com",
+        "subject": "Approve Weekly Product Pulse?",
+        "message": "=Weekly pulse:\n{{ $('Generate Weekly Product Pulse').first().json.output }}\n\nCustomer explanation:\n{{ $('Generate Customer Explanation').first().json.output }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        0
+      ],
+      "id": "6179535f-b4c9-447e-9473-437069d023a6",
+      "name": "Send message and wait for response",
+      "webhookId": "346eaae3-90b1-4cbc-ba1c-e655d9987a2e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LOgihhtP0n3JFLDZ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Review Intelligence Layer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Review Intelligence Layer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Intelligence Layer": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Product Pulse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Weekly Product Pulse",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Product Pulse": {
+      "main": [
+        [
+          {
+            "node": "Generate Customer Explanation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Customer Explanation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Customer Explanation": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "MCP Client - Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client - GMail": {
+      "main": [
+        []
+      ]
+    },
+    "MCP Client - Google Doc": {
+      "main": [
+        [
+          {
+            "node": "MCP Client - GMail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "87b20819-467d-4163-989c-0d4b66ddf9c6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "323434a791602b15ccd8985c9d69cffb073e6f56b8329bc99832d653005523e2"
+  },
+  "nodeGroups": [],
+  "id": "mcRUlb8Az5F9yvjC",
+  "tags": []
+}
